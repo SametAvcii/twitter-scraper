@@ -173,3 +173,14 @@ func (conversation *threadedConversation) parse() []*Tweet {
 	}
 	return tweets
 }
+
+func (n *timelineV2) GetIDS() []string {
+	var ids []string
+
+	for _, instruction := range n.Data.User.Result.TimelineV2.Timeline.Instructions {
+		for _, entry := range instruction.Entries {
+			ids = append(ids, entry.Content.ItemContent.TweetResults.Result.Legacy.ConversationIDStr)
+		}
+	}
+	return ids
+}

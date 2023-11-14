@@ -186,3 +186,113 @@ type (
 	fetchProfileFunc func(query string, maxProfilesNbr int, cursor string) ([]*Profile, string, error)
 	fetchTweetFunc   func(query string, maxTweetsNbr int, cursor string) ([]*Tweet, string, error)
 )
+
+// Failed Tweet
+type TweetResults struct {
+	Result struct {
+		Tweet struct {
+			RestID            string `json:"rest_id"`
+			HasBirdwatchNotes bool   `json:"has_birdwatch_notes"`
+			IsTranslatable    bool   `json:"is_translatable"`
+			Views             struct {
+				State string `json:"state"`
+			} `json:"views"`
+			Source        string   `json:"source"`
+			AwardEligible bool     `json:"award_eligible"`
+			GrantedAwards struct{} `json:"granted_awards"`
+			Legacy        struct {
+				BookmarkCount       int    `json:"bookmark_count"`
+				Bookmarked          bool   `json:"bookmarked"`
+				CreatedAt           string `json:"created_at"`
+				ConversationControl struct {
+					Policy                   string `json:"policy"`
+					ConversationOwnerResults struct {
+						Result struct {
+							Type   string `json:"__typename"`
+							Legacy struct {
+								ScreenName string `json:"screen_name"`
+							} `json:"legacy"`
+						} `json:"result"`
+					} `json:"conversation_owner_results"`
+				} `json:"conversation_control"`
+				ConversationIDStr string `json:"conversation_id_str"`
+				DisplayTextRange  []int  `json:"display_text_range"`
+				Entities          struct {
+					UserMentions []interface{} `json:"user_mentions"`
+					Urls         []interface{} `json:"urls"`
+					Hashtags     []interface{} `json:"hashtags"`
+					Symbols      []interface{} `json:"symbols"`
+				} `json:"entities"`
+				FavoriteCount  int    `json:"favorite_count"`
+				Favorited      bool   `json:"favorited"`
+				FullText       string `json:"full_text"`
+				IsQuoteStatus  bool   `json:"is_quote_status"`
+				Lang           string `json:"lang"`
+				LimitedActions string `json:"limited_actions"`
+				QuoteCount     int    `json:"quote_count"`
+				ReplyCount     int    `json:"reply_count"`
+				RetweetCount   int    `json:"retweet_count"`
+				Retweeted      bool   `json:"retweeted"`
+				UserIDStr      string `json:"user_id_str"`
+				IDStr          string `json:"id_str"`
+			} `json:"legacy"`
+			QuickPromoteEligibility struct {
+				Eligibility string `json:"eligibility"`
+			} `json:"quick_promote_eligibility"`
+		} `json:"tweet"`
+		LimitedActionResults struct {
+			LimitedActions []struct {
+				Action string `json:"action"`
+				Prompt struct {
+					Type     string `json:"__typename"`
+					CtaType  string `json:"cta_type"`
+					Headline struct {
+						Text     string        `json:"text"`
+						Entities []interface{} `json:"entities"`
+					} `json:"headline"`
+					Subtext struct {
+						Text     string        `json:"text"`
+						Entities []interface{} `json:"entities"`
+					} `json:"subtext"`
+				} `json:"prompt"`
+			} `json:"limited_actions"`
+		} `json:"limitedActionResults"`
+	} `json:"result"`
+}
+
+type ItemContent struct {
+	TweetResults        TweetResults `json:"tweet_results"`
+	TweetDisplayType    string       `json:"tweetDisplayType"`
+	HasModeratedReplies bool         `json:"hasModeratedReplies"`
+}
+
+type EntryContent struct {
+	ItemType    string      `json:"itemType"`
+	ItemContent ItemContent `json:"itemContent"`
+}
+
+type Entry struct {
+	EntryID   string       `json:"entryId"`
+	SortIndex string       `json:"sortIndex"`
+	Content   EntryContent `json:"content"`
+}
+
+type ThreadedConversation struct {
+	Instructions []struct {
+		Type    string  `json:"type"`
+		Entries []Entry `json:"entries"`
+	} `json:"instructions"`
+}
+
+type FetchFailed struct {
+	Data struct {
+		ThreadedConversationWithInjectionsV2 ThreadedConversation `json:"threaded_conversation_with_injections_v2"`
+	} `json:"data"`
+}
+
+func (t *Tweet) FailMapping(fail FetchFailed) {
+	t.ConversationID = fail.Data.ThreadedConversationWithInjectionsV2.Instructions[0].Entries[0].Content.ItemContent.TweetResults.Result.Tweet.Legacy.ConversationIDStr
+	t.GIFs = nil
+	//t.Hashtags=fail.Data.ThreadedConversationWithInjectionsV2.Instructions[0].Entries[0].Content.ItemContent.TweetResults.Result.Tweet.Legacy.Entities.Hashtags
+	t.Text = fail.Data.ThreadedConversationWithInjectionsV2.Instructions[0].Entries[0].Content.ItemContent.TweetResults.Result.Tweet.Legacy.FullText
+}
