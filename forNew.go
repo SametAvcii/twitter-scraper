@@ -1,7 +1,5 @@
 package twitterscraper
 
-import "fmt"
-
 type newTimelineV2 struct {
 	Data struct {
 		User struct {
@@ -49,12 +47,9 @@ type newLegacyTweet struct {
 
 func (n *newTimelineV2) GetIDS() []string {
 	var ids []string
-	fmt.Println("giriyor ama")
 
 	for _, instruction := range n.Data.User.Result.TimelineV2.Timeline.Instructions {
-		fmt.Println("gir 1")
 		for _, entry := range instruction.Entries {
-			fmt.Println("gir 2")
 			ids = append(ids, entry.Content.ItemContent.TweetResults.Result.Legacy.ConversationIDStr)
 		}
 	}

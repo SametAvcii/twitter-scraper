@@ -17,8 +17,9 @@ func InitScrapper(username, pass string) {
 	f, _ := os.Open("cookies.json")
 	json.NewDecoder(f).Decode(&cookies)
 	scraper.SetCookies(cookies)
-	//scraper.Login(username, pass)
+
 	isLogin := scraper.IsLoggedIn()
+	fmt.Println("is login:", isLogin)
 	if !isLogin {
 		fmt.Println("Cookied success")
 		err := scraper.Login(username, pass)

@@ -14,6 +14,7 @@ type result struct {
 			} `json:"result"`
 		} `json:"user_results"`
 	} `json:"core"`
+	Tweet TweetFail `json:"tweet"`
 	Views struct {
 		Count string `json:"count"`
 	} `json:"views"`
@@ -35,6 +36,21 @@ func (result *result) parse() *Tweet {
 		result.Legacy.FullText = result.NoteTweet.NoteTweetResults.Result.Text
 	}
 	tw := parseLegacyTweet(&result.Core.UserResults.Result.Legacy, &result.Legacy)
+	if tw == nil {
+		return nil
+	}
+	if tw.Views == 0 && result.Views.Count != "" {
+		tw.Views, _ = strconv.Atoi(result.Views.Count)
+	}
+	if result.QuotedStatusResult.Result != nil {
+		tw.QuotedStatus = result.QuotedStatusResult.Result.parse()
+	}
+	return tw
+}
+
+func (result *result) parseVisibility() *Tweet {
+
+	tw := parseLegacyTweet(&result.Tweet.Core.UserResults.Result.Legacy, &result.Tweet.LegacyTweet)
 	if tw == nil {
 		return nil
 	}
@@ -110,6 +126,15 @@ func (timeline *timelineV2) parseTweets() ([]*Tweet, string) {
 					tweets = append(tweets, tweet)
 				}
 			}
+
+			if entry.Content.ItemContent.TweetResults.Result.Typename == "TweetWithVisibilityResults" {
+				if tweet := entry.Content.ItemContent.TweetResults.Result.parseVisibility(); tweet != nil {
+					if entry.Content.ItemContent.TweetDisplayType == "SelfThread" {
+						tweet.IsSelfThread = true
+					}
+					tweets = append(tweets, tweet)
+				}
+			}
 		}
 	}
 	return tweets, cursor
@@ -139,6 +164,15 @@ func (conversation *threadedConversation) parse() []*Tweet {
 					tweets = append(tweets, tweet)
 				}
 			}
+			if entry.Content.ItemContent.TweetResults.Result.Typename == "TweetWithVisibilityResults" {
+				if tweet := entry.Content.ItemContent.TweetResults.Result.parseVisibility(); tweet != nil {
+					if entry.Content.ItemContent.TweetDisplayType == "SelfThread" {
+						tweet.IsSelfThread = true
+					}
+					tweets = append(tweets, tweet)
+				}
+			}
+
 			for _, item := range entry.Content.Items {
 				if item.Item.ItemContent.TweetResults.Result.Typename == "Tweet" {
 					if tweet := item.Item.ItemContent.TweetResults.Result.parse(); tweet != nil {
@@ -174,13 +208,17 @@ func (conversation *threadedConversation) parse() []*Tweet {
 	return tweets
 }
 
-func (n *timelineV2) GetIDS() []string {
-	var ids []string
-
-	for _, instruction := range n.Data.User.Result.TimelineV2.Timeline.Instructions {
-		for _, entry := range instruction.Entries {
-			ids = append(ids, entry.Content.ItemContent.TweetResults.Result.Legacy.ConversationIDStr)
-		}
-	}
-	return ids
+type TweetFail struct {
+	RestID            string `json:"rest_id"`
+	HasBirdwatchNotes bool   `json:"has_birdwatch_notes"`
+	Core              struct {
+		UserResults struct {
+			Result struct {
+				IsBlueVerified bool       `json:"is_blue_verified"`
+				Legacy         legacyUser `json:"legacy"`
+			} `json:"result"`
+		} `json:"user_results"`
+	} `json:"core"`
+	LegacyTweet legacyTweet `json:"legacy"`
+	IDStr       string      `json:"id_str"`
 }

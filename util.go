@@ -195,7 +195,7 @@ func parseLegacyTweet(user *legacyUser, tweet *legacyTweet) *Tweet {
 		tw.RetweetedStatusID = tweet.RetweetedStatusIDStr
 		if tweet.RetweetedStatusResult.Result != nil {
 			tw.RetweetedStatus = parseLegacyTweet(&tweet.RetweetedStatusResult.Result.Core.UserResults.Result.Legacy, &tweet.RetweetedStatusResult.Result.Legacy)
-			tw.RetweetedStatusID = tw.RetweetedStatus.ID
+			//tw.RetweetedStatusID = tw.RetweetedStatus.ID
 		}
 	}
 

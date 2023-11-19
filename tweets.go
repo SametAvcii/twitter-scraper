@@ -30,8 +30,6 @@ func (s *Scraper) FetchTweetsByUserID(userID string, maxTweetsNbr int, cursor st
 	if maxTweetsNbr > 200 {
 		maxTweetsNbr = 200
 	}
-	fmt.Println("girdi")
-
 	req, err := s.newRequest("GET", "https://twitter.com/i/api/graphql/UGi7tjRPr-d_U3bCPIko5Q/UserTweets")
 	if err != nil {
 		return nil, "", err
@@ -260,13 +258,13 @@ func (s *Scraper) GetTweet(id string) (*Tweet, error) {
 		}
 
 		err = s.RequestAPI(req, &conversation)
-		if curBearerToken != bearerToken2 {
-			s.setBearerToken(curBearerToken)
-		}
 		if err != nil {
 			return nil, err
 		}
 
+		if curBearerToken != bearerToken2 {
+			s.setBearerToken(curBearerToken)
+		}
 		tweets := conversation.parse()
 		for _, tweet := range tweets {
 			if tweet.ID == id {
@@ -275,7 +273,7 @@ func (s *Scraper) GetTweet(id string) (*Tweet, error) {
 		}
 
 		// is fail status
-		var failTweet FetchFailed
+		/*var failTweet FetchFailed
 		err = s.RequestAPI(req, &failTweet)
 		if curBearerToken != bearerToken2 {
 			s.setBearerToken(curBearerToken)
@@ -284,8 +282,8 @@ func (s *Scraper) GetTweet(id string) (*Tweet, error) {
 			return nil, err
 		}
 		var tw Tweet
-		tw.FailMapping(failTweet)
-		return &tw, nil
+		tw.FailMapping(failTweet)*/
+		//return &tw, nil
 	}
 
 	return nil, fmt.Errorf("tweet with ID %s not found", id)
