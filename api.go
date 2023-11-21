@@ -68,7 +68,9 @@ func (s *Scraper) RequestAPI(req *http.Request, target interface{}) error {
 	if target == nil {
 		return nil
 	}
+
 	return json.Unmarshal(content, target)
+
 }
 
 // GetGuestToken from Twitter API
